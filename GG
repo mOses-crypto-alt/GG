@@ -1,0 +1,116 @@
+# импорт всех функций библиотеки tkinter
+from tkinter import *
+
+# импорт библиотеки для работы со случайными величинами
+from random import *
+
+# импорт библиотеки для работы с функциями времени
+from time import *
+
+# функция, которая вызывается при нажатии на любую клавишу
+def key_all(event):
+    global keeper_speed
+
+    if event.keysym == "Right":
+        keeper_speed = 4
+    elif event.keysym == "Left":
+        keeper_speed = -4
+    elif event.keysym == "space":
+        keeper_speed = 0
+
+# функция движения мячика
+def move_ball():
+    global ball_speed
+    global count
+    global game_flag
+
+    # координаты шарика
+    x1 = canvas.coords(ball)[0]
+    y1 = canvas.coords(ball)[1]
+    x2 = canvas.coords(ball)[2]
+    y2 = canvas.coords(ball)[3]
+
+    # отрисовка шарика
+    canvas.move(ball, 0, ball_speed)
+
+    if y2 >= 550: # шарик дошел до нижнего края
+        # считаем сериедину по x
+        center_x = x1 + 15
+        # проверка того, что шарик попал на платформу
+        if canvas.coords(keeper)[0] < center_x < canvas.coords(keeper)[2]:
+            count += 1
+            canvas.itemconfig(text_count, text="Счёт: "+str(count))
+            random_x = randrange(30, 270)
+            # переписываем координаты шарика
+            canvas.coords(ball, random_x, 50, random_x+30, 80)
+        else:
+            game_flag = False
+
+
+# функция движения вратаря
+def move_keeper():
+    # координаты вратаря (по x)
+    x1 = canvas.coords(keeper)[0]
+    x2 = canvas.coords(keeper)[2]
+    # проверка того, что вратарь внутри холста (не дошел до края)
+    if (keeper_speed > 0 and x2 < 300) or\
+       (keeper_speed < 0 and x1 >0):
+        canvas.move(keeper, keeper_speed, 0) # вратарь передвинулся по горизонтали
+
+def main():
+    global game_flag
+
+    move_ball() # мячик отрисовывается
+    move_keeper() # вратарь отрисовывается
+
+    if game_flag:
+        root.after(15, main) # вызывает саму себя через 30 милисекунд
+    else:
+        canvas.create_text(145, 300, text="Игра окончена!",
+                           font="Georgia 20", fill="yellow")
+
+
+
+
+
+# окно игры
+root = Tk()
+root.title("вратарь")
+root.geometry("300x600+500+30")
+
+# холст
+canvas = Canvas(root, width=300, height=600, bg="green")
+canvas.pack()
+
+# "земля" внизу окна, по которой движется вратарь
+canvas.create_rectangle(0, 550, 300, 600, fill="white", outline="white")
+
+# вратарь
+keeper = canvas.create_rectangle(0, 550, 40, 565, fill="red", outline="red")
+
+# мячик
+ball = canvas.create_oval(50, 50, 80, 80, fill="blue", outline="blue")
+
+# текст, содержащий счёт игры
+count = 0
+text_count = canvas.create_text(240, 580, text="Счёт: "+str(count),\
+                                fill="blue", font="Georgia 14")
+
+# скорость шарика
+ball_speed = 4
+
+# скорость вратаря
+keeper_speed = 0
+
+# связывание нажатия клавиш на клавиатуре с функцией, которая будет
+# обрабатывать это нажатие
+root.bind("<KeyPress>", key_all)
+
+# флаг игры
+game_flag = True
+
+# вызов главной функции игры
+main()
+
+# основной цикл обработки событий
+root.mainloop()
